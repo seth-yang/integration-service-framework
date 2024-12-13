@@ -1,0 +1,126 @@
+[
+    {
+        "shortOption": "c",
+        "longOption": "config",
+        "description": "path to config",
+        "requireValue": true,
+        "defaultValue": "../conf/integration.conf"
+    },
+    {
+        "shortOption": "d",
+        "longOption": "database",
+        "description": "path to internal sqlite3 file",
+        "requireValue": true,
+        "defaultValue": "../database",
+        "propKey": "framework.database.dir"
+    },
+    {
+        "shortOption": "e",
+        "longOption": "conf-extra-dir",
+        "description": "path to extra config files",
+        "requireValue": true,
+        "defaultValue": "../conf.d",
+        "propKey": "integration.ext.conf.dir"
+    },
+    {
+        "shortOption": "X",
+        "longOption": "jmx-enabled",
+        "description": "enable jmx feature or not",
+        "propKey": "integration.jmx.enabled"
+    },
+    {
+        "shortOption": "v",
+        "longOption": "verbose",
+        "description": "enter verbose mode"
+    },
+    {
+        "longOption": "log-file",
+        "description": "the log file",
+        "requireValue": true,
+        "defaultValue": "../logs/integration.log"
+    },
+    {
+        "longOption": "log-level",
+        "description": "the log level",
+        "requireValue": true,
+        "defaultValue": "INFO",
+        "values": [
+            {
+                "value": "TRACE",
+                "desc": "trace, same to option -v"
+            },
+            {
+                "value": "DEBUG",
+                "desc": "debug"
+            },
+            {
+                "value": "INFO",
+                "desc": "info"
+            },
+            {
+                "value": "WARN",
+                "desc": "warn"
+            },
+            {
+                "value": "ERROR",
+                "desc": "error"
+            },
+            {
+                "value": "FATAL",
+                "desc": "fatal"
+            }
+        ]
+    },
+    {
+        "longOption": "internal-dir",
+        "description": "a path where the framework load internal modules from",
+        "requireValue": true,
+        "defaultValue": "../internal",
+        "propKey": "framework.internal.dir"
+    },{
+        "longOption": "extServices-dir",
+        "description": "a path where the framework load extServices modules from",
+        "requireValue": true,
+        "defaultValue": "../ext-services",
+        "propKey": "framework.extServices.dir"
+    },
+    {
+        "longOption": "modules-dir",
+        "description": "a path where the framework load modules from",
+        "requireValue": true,
+        "defaultValue": "../modules",
+        "propKey": "framework.modules.dir"
+    },
+    {
+        "longOption": "work-dir",
+        "description": "a path where the framework stores the working files",
+        "requireValue": true,
+        "defaultValue": "../work",
+        "propKey": "framework.work.dir"
+    },
+    {
+        "longOption": "tmp-dir",
+        "description": "a path where the framework and modules store the temp files",
+        "requireValue": true,
+        "defaultValue": "../tmp",
+        "propKey": "framework.tmp.dir"
+    },
+    {
+        "longOption": "debug-module",
+        "description": "for developing, refer to a module what is in debug mode, load from sys-classpath",
+        "requireValue": true,
+        "propKey": "framework.debug.module"
+    },
+    {
+        "longOption": "shutdown",
+        "description": "shutdown the framework",
+        "requireValue": false,
+        "propKey": "framework.action.shutdown"
+    },
+    {
+        "longOption": "version",
+        "description": "show the framework version, then exit the program.",
+        "requiredValue": false,
+        "propKey": "framework.action.show-version"
+    }
+]

@@ -3,13 +3,18 @@ package org.dreamwork.embedded.redis.impl;
 import org.dreamwork.embedded.redis.model.RedisConfig;
 import org.dreamwork.integration.api.services.IRedisService;
 import org.dreamwork.util.StringUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.*;
 
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class RedisServiceImpl implements IRedisService {
     private final JedisPool pool;
     private final int scanBatchSize;
+    private final Logger logger = LoggerFactory.getLogger (RedisServiceImpl.class);
 
     RedisServiceImpl (RedisConfig config, int database) {
         this (config.host, config.password, config.port, config.expireTime, database, config.scanBatchSize);
@@ -154,6 +159,32 @@ public class RedisServiceImpl implements IRedisService {
         }
     }
 
+    @Override
+    public void queryKeys (String pattern, Consumer<String> consumer) {
+        try (Jedis jedis = pool.getResource ()) {
+            ScanParams sp = new ScanParams ().match (pattern).count (scanBatchSize);
+
+            ScanResult<String> result = jedis.scan ("0", sp);
+            String cursor;
+            do {
+                cursor = result.getCursor ();
+                List<String> list = result.getResult ();
+                if (list != null && !list.isEmpty ()) {
+                    for (String key : list) {
+                        try {
+                            consumer.accept (key);
+                        } catch (Exception ex) {
+                            logger.warn (ex.getMessage (), ex);
+                        }
+                    }
+                }
+                if (!"0".equals (cursor)) {
+                    result = jedis.scan (cursor, sp);
+                }
+            } while (!"0".equals (cursor));
+        }
+    }
+
     public Map<String, String> query (String pattern) {
         List<String> keys = queryKeys (pattern);
         if (!keys.isEmpty ()) {
@@ -172,9 +203,43 @@ public class RedisServiceImpl implements IRedisService {
         return Collections.emptyMap ();
     }
 
+    @Override
+    public void query (String pattern, BiConsumer<String, String> consumer) {
+        try (Jedis jedis = pool.getResource ()) {
+            ScanParams sp = new ScanParams ().match (pattern).count (scanBatchSize);
+
+            ScanResult<String> result = jedis.scan ("0", sp);
+            String cursor;
+            do {
+                cursor = result.getCursor ();
+                List<String> list = result.getResult ();
+                if (list != null && !list.isEmpty ()) {
+                    for (String key : list) {
+                        String value = jedis.get (key);
+                        try {
+                            consumer.accept (key, value);
+                        } catch (Exception ex) {
+                            logger.warn (ex.getMessage (), ex);
+                        }
+                    }
+                }
+                if (!"0".equals (cursor)) {
+                    result = jedis.scan (cursor, sp);
+                }
+            } while (!"0".equals (cursor));
+        }
+    }
+
     public Map<String, String> query (String key, String pattern) {
         try (Jedis jedis = pool.getResource ()) {
             return query (jedis, key, pattern);
+        }
+    }
+
+    @Override
+    public void query (String key, String pattern, BiConsumer<String, String> consumer) {
+        try (Jedis jedis = pool.getResource ()) {
+            query (jedis, key, pattern, consumer);
         }
     }
 
@@ -191,6 +256,28 @@ public class RedisServiceImpl implements IRedisService {
         }
 
         return Collections.emptyMap ();
+    }
+
+    @Override
+    public void queryAsMaps (String pattern, Consumer<Map<String, String>> consumer) {
+        try (Jedis jedis = pool.getResource ()) {
+            ScanParams sp = new ScanParams ().match (pattern).count (scanBatchSize);
+            ScanResult<String> result = jedis.scan ("0", sp);
+            String cursor;
+            do {
+                cursor = result.getCursor ();
+                List<String> list = result.getResult ();
+                if (list != null && !list.isEmpty ()) {
+                    for (String key : list) {
+                        Map<String, String> map = readAsMap (jedis, key);
+                        consumer.accept (map);
+                    }
+                }
+                if (!"0".equals (cursor)) {
+                    result = jedis.scan (cursor, sp);
+                }
+            } while (!"0".equals (cursor));
+        }
     }
 
     /**
@@ -448,6 +535,28 @@ public class RedisServiceImpl implements IRedisService {
             }
         } while (!"0".equals (cursor));
         return map;
+    }
+
+    private void query (Jedis jedis, String key, String pattern, BiConsumer<String, String> consumer) {
+        ScanParams sp = new ScanParams ().match (pattern).count (scanBatchSize);
+        ScanResult<Map.Entry<String, String>> result = jedis.hscan (key, "0", sp);
+        String cursor;
+        do {
+            cursor = result.getCursor ();
+            List<Map.Entry<String, String>> list = result.getResult ();
+            if (list != null && !list.isEmpty ()) {
+                for (Map.Entry<String, String> e : list) {
+                    try {
+                        consumer.accept (e.getKey (), e.getValue ());
+                    } catch (Exception ex) {
+                        logger.warn (ex.getMessage (), ex);
+                    }
+                }
+            }
+            if (!"0".equals (cursor)) {
+                result = jedis.hscan (key, cursor, sp);
+            }
+        } while (!"0".equals (cursor));
     }
 
     private Map<String, String> readAsMap (Jedis jedis, String key, String... fields) {

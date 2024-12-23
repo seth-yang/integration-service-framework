@@ -5,6 +5,8 @@ import org.dreamwork.util.IDisposable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public interface IRedisService extends IDisposable {
     /////////////////////////////////////// 通用操作 //////////////////////////////
@@ -44,11 +46,25 @@ public interface IRedisService extends IDisposable {
     List<String> queryKeys (String pattern);
 
     /**
+     * 查询指定模式的key的所有集合，然后消费这个集合
+     * @param pattern  key的模式
+     * @param consumer 消费者，其参数时每个符合 pattern 的 key
+     */
+    void queryKeys (String pattern, Consumer<String> consumer);
+
+    /**
      * 查询指定模式的key的结果集
      * @param pattern key 的模式
      * @return 所有匹配模式 {@code pattern} 的所有结果集
      */
     Map<String, String> query (String pattern);
+
+    /**
+     * 查询指定模式的key的结果集
+     * @param pattern  key的模式
+     * @param consumer 消费者，其参数为每个符合 pattern 的 key，和这个 key 指向的 值
+     */
+    void query (String pattern, BiConsumer<String, String> consumer);
 
     /**
      * 删除指定的缓存
@@ -175,11 +191,26 @@ public interface IRedisService extends IDisposable {
     Map<String, String> query (String key, String pattern);
 
     /**
+     * 查询指定{@code key}的字典内部符合模式 {@code pattern} 的结果集，并消费
+     * @param key     字典的 key
+     * @param pattern 字典内字段名模式
+     * @param consumer 消费者，其参数是在 key 指向的字典内部的每个符合 pattern 的键，以及这个键指向的值
+     */
+    void query (String key, String pattern, BiConsumer<String, String> consumer);
+
+    /**
      * 查找所有满足模式 {@code pattern} 的key的字典
      * @param pattern 字典的key的模式
      * @return 所有匹配模式 {@code pattern} 的字典的结果集
      */
     Map<String, Map<String, String>> queryAsMaps (String pattern);
+
+    /**
+     * 查找所有满足模式 {@code pattern} 的key的字典，并消费
+     * @param pattern  字典key的模式
+     * @param consumer 消费者，其参数是每个符合 pattern 的 key，及这个 key 指向的字典
+     */
+    void queryAsMaps (String pattern, Consumer<Map<String, String>> consumer);
 
     ////////////////////////////////// 列表操作 ///////////////////////////////
 
